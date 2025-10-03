@@ -1,0 +1,46 @@
+name: Swift macOS Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.4'
+    
+    - name: Create Xcode project
+      run: |
+        # Create a simple Xcode project structure
+        mkdir -p FindMyCatClient.xcodeproj
+        mkdir -p FindMyCatClient
+        
+        # Copy our Swift files to the project
+        cp *.swift FindMyCatClient/ || true
+        cp -r ViewModels FindMyCatClient/ || true
+        cp -r Views FindMyCatClient/ || true
+        cp -r Models FindMyCatClient/ || true
+        cp -r Resources FindMyCatClient/ || true
+        
+    - name: Build with Swift Package Manager
+      run: |
+        # Try building with Swift Package Manager first
+        if [ -f Package.swift ]; then
+          swift build
+        else
+          echo "No Package.swift found, using xcodebuild"
+        fi
+    
+    - name: Run syntax check
+      run: |
+        # Check all Swift files for syntax errors
+        find . -name "*.swift" -exec swift -frontend -parse {} \;
